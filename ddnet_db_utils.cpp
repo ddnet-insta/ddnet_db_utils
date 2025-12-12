@@ -1,6 +1,7 @@
 #include "ddnet_db_utils.h"
 
 #include <base/log.h>
+#include <base/str.h>
 #include <base/system.h>
 
 #include <engine/server/databases/connection.h>
@@ -108,13 +109,47 @@ namespace ddnet_db_utils
 		if(HasColumn(pSqlServer, pTableName, pColumnName, pError, ErrorSize))
 			return true;
 
-		log_info("ddnet_db_utils", "adding missing %s column '%s' to '%s'", BackendName(pSqlServer), pColumnName, pTableName);
+		log_info("ddnet_db_utils", "adding missing integer %s column '%s' to '%s'", BackendName(pSqlServer), pColumnName, pTableName);
 
 		char aBuf[4096];
 		str_format(
 			aBuf,
 			sizeof(aBuf),
 			"ALTER TABLE %s ADD COLUMN %s INTEGER DEFAULT %d;", pTableName, pColumnName, Default);
+
+		if(!pSqlServer->PrepareStatement(aBuf, pError, ErrorSize))
+		{
+			return false;
+		}
+		pSqlServer->Print();
+		int NumInserted;
+		return pSqlServer->ExecuteUpdate(&NumInserted, pError, ErrorSize);
+	}
+
+	bool AddStrColumn(IDbConnection *pSqlServer, const char *pTableName, const char *pColumnName, int Length, bool Collate, bool NotNull, const char *pDefault, char *pError, int ErrorSize)
+	{
+		if(HasColumn(pSqlServer, pTableName, pColumnName, pError, ErrorSize))
+			return true;
+
+		log_info("ddnet_db_utils", "adding missing string %s column '%s' to '%s'", BackendName(pSqlServer), pColumnName, pTableName);
+
+		char aProperties[512] = "";
+		if(Collate)
+		{
+			str_append(aProperties, " COLLATE ");
+			str_append(aProperties, pSqlServer->BinaryCollate());
+			str_append(aProperties, " ");
+		}
+		if(NotNull)
+		{
+			str_append(aProperties, " NOT NULL ");
+		}
+
+		char aBuf[4096];
+		str_format(
+			aBuf,
+			sizeof(aBuf),
+			"ALTER TABLE %s ADD COLUMN %s VARCHAR(%d) %sDEFAULT '%s';", pTableName, pColumnName, Length, aProperties, pDefault);
 
 		if(!pSqlServer->PrepareStatement(aBuf, pError, ErrorSize))
 		{
