@@ -11,7 +11,6 @@
 
 namespace ddnet_db_utils
 {
-
 	enum class ESqlBackend
 	{
 		SQLITE3,
@@ -20,8 +19,21 @@ namespace ddnet_db_utils
 
 	// hack to avoid editing connection.h in ddnet code
 	ESqlBackend DetectBackend(IDbConnection *pSqlServer);
-	bool AddIntColumn(IDbConnection *pSqlServer, const char *pTableName, const char *pColumnName, int Default, char *pError, int ErrorSize);
-	bool AddColumnIntDefault0Sqlite3(IDbConnection *pSqlServer, const char *pTableName, const char *pColumnName, char *pError, int ErrorSize);
-	bool AddColumnIntDefault0Mysql(IDbConnection *pSqlServer, const char *pTableName, const char *pColumnName, char *pError, int ErrorSize);
+	bool HasColumn(IDbConnection *pSqlServer, const char *pTableName, const char *pColumnName, char *pError, int ErrorSize);
 
+	/**
+	 * Adds `pColumnName` to database table `pTableName`
+	 * with default value being `Default`.
+	 * This is safe to run multiple times.
+	 * It only adds the column if it is not there already.
+	 * Supported backends are mariadb and sqlite3.
+	 *
+	 * @param pSqlServer
+	 * @param pTableName name of the target database table that will be written to
+	 * @param pColumnName name of the new database column that will be created
+	 * @param Default the default integer value the database will use for new entries in that column
+	 * @param pError in case of error this buffer will be written to
+	 * @param ErrorSize size of the error buffer in bytes
+	 */
+	bool AddIntColumn(IDbConnection *pSqlServer, const char *pTableName, const char *pColumnName, int Default, char *pError, int ErrorSize);
 }
