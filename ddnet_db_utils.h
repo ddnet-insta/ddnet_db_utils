@@ -2,7 +2,7 @@
 //  ^
 //  |
 // this is a hack for the lint so we can use
-// pragma once instead of using a includ guard with
+// pragma once instead of using a include guard with
 // path name, because the path name is chosen by the
 // user of this library
 #pragma once
