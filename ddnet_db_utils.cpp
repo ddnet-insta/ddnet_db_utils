@@ -104,6 +104,89 @@ namespace ddnet_db_utils
 		return false;
 	}
 
+	static bool IsColumnBinaryCollateSqlite3(IDbConnection *pSqlServer, const char *pTableName, const char *pColumnName, char *pError, int ErrorSize)
+	{
+		// TODO: implement
+		return true;
+	}
+
+	static bool IsColumnBinaryCollateMysql(IDbConnection *pSqlServer, const char *pTableName, const char *pColumnName, char *pError, int ErrorSize)
+	{
+		char aBuf[] = "SELECT COLLATION_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?;";
+		if(!pSqlServer->PrepareStatement(aBuf, pError, ErrorSize))
+		{
+			log_error("ddnet_db_utils", "prepare failed query: %s", aBuf);
+			return false;
+		}
+		pSqlServer->BindString(1, pTableName);
+		pSqlServer->BindString(2, pColumnName);
+		pSqlServer->Print();
+
+		bool End;
+		if(!pSqlServer->Step(&End, pError, ErrorSize))
+		{
+			log_error("ddnet_db_utils", "step failed query: %s", aBuf);
+			return false;
+		}
+		if(End)
+		{
+			str_format(pError, ErrorSize, "column '%s' not found in table '%s'", pColumnName, pTableName);
+			return false;
+		}
+
+		char aCollate[512];
+		pSqlServer->GetString(1, aCollate, sizeof(aCollate));
+		return str_find(aCollate, pSqlServer->BinaryCollate());
+	}
+
+	bool IsColumnBinaryCollate(IDbConnection *pSqlServer, const char *pTableName, const char *pColumnName, char *pError, int ErrorSize)
+	{
+		ESqlBackend Backend = DetectBackend(pSqlServer);
+		switch(Backend)
+		{
+		case ESqlBackend::MYSQL:
+			return IsColumnBinaryCollateMysql(pSqlServer, pTableName, pColumnName, pError, ErrorSize);
+		case ESqlBackend::SQLITE3:
+			return IsColumnBinaryCollateSqlite3(pSqlServer, pTableName, pColumnName, pError, ErrorSize);
+		}
+		dbg_assert_failed("Unsupported database backend: %s", BackendName(pSqlServer));
+		return false;
+	}
+
+	bool AddBinaryCollateToVarcharColumn(
+		IDbConnection *pSqlServer,
+		const char *pTableName,
+		const char *pColumnName,
+		int VarcharSize,
+		const char *pNotNullAndDefault,
+		char *pError,
+		int ErrorSize)
+	{
+		if(IsColumnBinaryCollate(pSqlServer, pTableName, pColumnName, pError, ErrorSize))
+			return true;
+
+		log_info("ddnet_db_utils", "adding missing %s binary collate to column '%s' in table '%s'", BackendName(pSqlServer), pColumnName, pTableName);
+
+		char aBuf[4096];
+		str_format(
+			aBuf,
+			sizeof(aBuf),
+			"ALTER TABLE %s MODIFY %s VARCHAR(%d) COLLATE %s %s;",
+			pTableName,
+			pColumnName,
+			VarcharSize,
+			pSqlServer->BinaryCollate(),
+			pNotNullAndDefault);
+
+		if(!pSqlServer->PrepareStatement(aBuf, pError, ErrorSize))
+		{
+			return false;
+		}
+		pSqlServer->Print();
+		int NumInserted;
+		return pSqlServer->ExecuteUpdate(&NumInserted, pError, ErrorSize);
+	}
+
 	bool AddIntColumn(IDbConnection *pSqlServer, const char *pTableName, const char *pColumnName, int Default, char *pError, int ErrorSize)
 	{
 		if(HasColumn(pSqlServer, pTableName, pColumnName, pError, ErrorSize))

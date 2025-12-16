@@ -20,6 +20,27 @@ namespace ddnet_db_utils
 	// hack to avoid editing connection.h in ddnet code
 	ESqlBackend DetectBackend(IDbConnection *pSqlServer);
 	bool HasColumn(IDbConnection *pSqlServer, const char *pTableName, const char *pColumnName, char *pError, int ErrorSize);
+	bool IsColumnBinaryCollate(IDbConnection *pSqlServer, const char *pTableName, const char *pColumnName, char *pError, int ErrorSize);
+
+	/**
+	 * Adds the collate binary property to a column
+	 * that will be "COLLATE BINARY" for sqlite3
+	 * and "COLLATE utf8mb4_bin" for mysql (mariadb)
+	 *
+	 * It does nothing if it was already set. So its safe to call it multiple times.
+	 *
+	 * WARNING: all parameters can be used for SQL injections.
+	 *          NEVER pass userinput to this function!
+	 *
+	 * @param pSqlServer
+	 * @param pTableName name of the target database table that will be written to
+	 * @param pColumnName name of the existing database column that will be altered
+	 * @param VarcharSize the size of the existing VARCHAR (needed for the underlying sql command)
+	 * @param pNonNullAndDefault additional properties such as "NOT NULL DEFAULT ''"
+	 * @param pError in case of error this buffer will be written to
+	 * @param ErrorSize size of the error buffer in bytes
+	 */
+	bool AddBinaryCollateToVarcharColumn(IDbConnection *pSqlServer, const char *pTableName, const char *pColumnName, int VarcharSize, const char *pNotNullAndDefault, char *pError, int ErrorSize);
 
 	/**
 	 * Adds `pColumnName` to database table `pTableName`
