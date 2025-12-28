@@ -135,6 +135,8 @@ namespace ddnet_db_utils
 		}
 
 		char aCollate[512];
+		if(pSqlServer->IsNull(1))
+			return false;
 		pSqlServer->GetString(1, aCollate, sizeof(aCollate));
 		return str_find(aCollate, pSqlServer->BinaryCollate());
 	}
