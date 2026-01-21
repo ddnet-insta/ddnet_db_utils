@@ -39,6 +39,8 @@ namespace ddnet_db_utils
 	 * @param pNonNullAndDefault additional properties such as "NOT NULL DEFAULT ''"
 	 * @param pError in case of error this buffer will be written to
 	 * @param ErrorSize size of the error buffer in bytes
+	 *
+	 * @return `true` on success and writes to `pError` otherwise
 	 */
 	bool AddBinaryCollateToVarcharColumn(IDbConnection *pSqlServer, const char *pTableName, const char *pColumnName, int VarcharSize, const char *pNotNullAndDefault, char *pError, int ErrorSize);
 
@@ -55,6 +57,8 @@ namespace ddnet_db_utils
 	 * @param Default the default integer value the database will use for new entries in that column
 	 * @param pError in case of error this buffer will be written to
 	 * @param ErrorSize size of the error buffer in bytes
+	 *
+	 * @return `true` on success and writes to `pError` otherwise
 	 */
 	bool AddIntColumn(IDbConnection *pSqlServer, const char *pTableName, const char *pColumnName, int Default, char *pError, int ErrorSize);
 
@@ -74,6 +78,34 @@ namespace ddnet_db_utils
 	 * @param pDefault the default string value the database will use for new entries in that column
 	 * @param pError in case of error this buffer will be written to
 	 * @param ErrorSize size of the error buffer in bytes
+	 *
+	 * @return `true` on success and writes to `pError` otherwise
 	 */
 	bool AddStrColumn(IDbConnection *pSqlServer, const char *pTableName, const char *pColumnName, int Length, bool Collate, bool NotNull, const char *pDefault, char *pError, int ErrorSize);
+
+	/**
+	 * Renames `pOldColumnName` to `pNewColumnName` in table `pTableName`
+	 * This is safe to run multiple times.
+	 * It only renames the column if it finds the old name.
+	 * Supported backends are mariadb (10.5.2+) and sqlite3.
+	 *
+	 * @param pSqlServer
+	 * @param pTableName name of the target database table that will be written to
+	 * @param pOldColumnName name of the to be renamed column
+	 * @param pNewColumnName new name of the column
+	 * @param pError in case of error this buffer will be written to
+	 * @param ErrorSize size of the error buffer in bytes
+	 *
+	 * @return `true` on success and writes to `pError` otherwise
+	 *         success does not mean a rename happened
+	 *         success just means no database error
+	 *         if pOldColumnName was not found it still returns `true`
+	 */
+	bool RenameColumn(
+		IDbConnection *pSqlServer,
+		const char *pTableName,
+		const char *pOldColumnName,
+		const char *pNewColumnName,
+		char *pError,
+		int ErrorSize);
 }

@@ -244,4 +244,51 @@ namespace ddnet_db_utils
 		int NumInserted;
 		return pSqlServer->ExecuteUpdate(&NumInserted, pError, ErrorSize);
 	}
+
+	bool RenameColumn(
+		IDbConnection *pSqlServer,
+		const char *pTableName,
+		const char *pOldColumnName,
+		const char *pNewColumnName,
+		char *pError,
+		int ErrorSize)
+	{
+		if(!HasColumn(pSqlServer, pTableName, pOldColumnName, pError, ErrorSize))
+			return true;
+		if(HasColumn(pSqlServer, pTableName, pNewColumnName, pError, ErrorSize))
+		{
+			log_error(
+				"ddnet_db_utils",
+				"FATAL ERROR: tried to rename column '%s' to '%s' in table '%s' but both exist already",
+				pOldColumnName,
+				pNewColumnName,
+				pTableName);
+			return false;
+		}
+
+		// TODO: check if mariadb version is new enough for this syntax
+		//       https://stackoverflow.com/a/60625725
+
+		char aBuf[4096];
+		str_format(
+			aBuf,
+			sizeof(aBuf),
+			"ALTER TABLE %s RENAME COLUMN %s TO %s;", pTableName, pOldColumnName, pNewColumnName);
+
+		if(!pSqlServer->PrepareStatement(aBuf, pError, ErrorSize))
+		{
+			return false;
+		}
+		pSqlServer->Print();
+		int NumUpdated;
+		if(!pSqlServer->ExecuteUpdate(&NumUpdated, pError, ErrorSize))
+			return false;
+		if(NumUpdated != 1 && NumUpdated != 0)
+		{
+			log_error("ddnet_db_utils", "expected 1 or 0 update on column rename but got %d", NumUpdated);
+			return false;
+		}
+		return true;
+	}
+
 }
