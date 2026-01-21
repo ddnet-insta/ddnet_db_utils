@@ -36,7 +36,7 @@ namespace ddnet_db_utils
 	 * @param pTableName name of the target database table that will be written to
 	 * @param pColumnName name of the existing database column that will be altered
 	 * @param VarcharSize the size of the existing VARCHAR (needed for the underlying sql command)
-	 * @param pNonNullAndDefault additional properties such as "NOT NULL DEFAULT ''"
+	 * @param pNotNullAndDefault additional properties such as "NOT NULL DEFAULT ''"
 	 * @param pError in case of error this buffer will be written to
 	 * @param ErrorSize size of the error buffer in bytes
 	 *
