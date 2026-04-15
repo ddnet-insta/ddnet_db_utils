@@ -1,8 +1,8 @@
 #include "ddnet_db_utils.h"
 
+#include <base/dbg.h>
 #include <base/log.h>
 #include <base/str.h>
-#include <base/system.h>
 
 #include <engine/server/databases/connection.h>
 
