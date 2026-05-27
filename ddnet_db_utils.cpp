@@ -28,6 +28,19 @@ namespace ddnet_db_utils
 		return "(unknown db backend)";
 	}
 
+	const char *PrimaryKeyAutoIncrement(IDbConnection *pSqlServer)
+	{
+		ESqlBackend Backend = DetectBackend(pSqlServer);
+		switch(Backend)
+		{
+		case ESqlBackend::MYSQL:
+			return "PRIMARY KEY AUTO_INCREMENT NOT NULL";
+		case ESqlBackend::SQLITE3:
+			return "PRIMARY KEY AUTOINCREMENT NOT NULL";
+		}
+		return "PRIMARY KEY AUTOINCREMENT NOT NULL";
+	}
+
 	static bool HasColumnSqlite3(IDbConnection *pSqlServer, const char *pTableName, const char *pColumnName, char *pError, int ErrorSize)
 	{
 		char aBuf[4096];

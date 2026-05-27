@@ -19,6 +19,11 @@ namespace ddnet_db_utils
 
 	// hack to avoid editing connection.h in ddnet code
 	ESqlBackend DetectBackend(IDbConnection *pSqlServer);
+
+	// abstracts away the syntax for the "AUTOINCREMENT PRIMARY KEY NOT NULL"
+	// properties that are different in mariadb and sqlite3
+	const char *PrimaryKeyAutoIncrement(IDbConnection *pSqlServer);
+
 	bool HasColumn(IDbConnection *pSqlServer, const char *pTableName, const char *pColumnName, char *pError, int ErrorSize);
 	bool IsColumnBinaryCollate(IDbConnection *pSqlServer, const char *pTableName, const char *pColumnName, char *pError, int ErrorSize);
 
